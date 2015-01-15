@@ -1,0 +1,15 @@
+<RCC>
+  <qresource prefix="VideoRecorder"/>
+  <qresource prefix="ICON">
+    <file>Resources/settings.ico</file>
+    <file>Resources/button_record_gray.ico</file>
+    <file>Resources/bullet_arrow_left.ico</file>
+    <file>Resources/bullet_arrow_down.ico</file>
+    <file>Resources/button_play_gray.ico</file>
+    <file>Resources/button_stop_gray.ico</file>
+    <file>Resources/button_play_blue.ico</file>
+    <file>Resources/button_red_pause.ico</file>
+    <file>Resources/button_record.ico</file>
+    <file>Resources/button_stop_green.ico</file>
+  </qresource>
+</RCC>
