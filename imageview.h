@@ -24,12 +24,16 @@ public:
     ~ImageView();
 
 public:
-    ControlPanel *controlPanel();
-    QComboBox *deviceComboBox();
-    HoverMenuButton *settingButton();
+    ControlPanel *controlPanel() const;
+    QComboBox *deviceComboBox() const;
+    HoverMenuButton *settingButton() const;
+    const QImage &image() const;
 
 public slots:
     void updateImage(const cv::Mat *img);
+
+signals:
+    void imageUpdated(const QImage &);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

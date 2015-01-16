@@ -93,6 +93,10 @@ VideoRecorder::VideoRecorder(QWidget *parent, Qt::WindowFlags flags)
     connect(ui.imageView->deviceComboBox(), SIGNAL(currentIndexChanged(int)),
             &camera, SLOT(setCameraIdx(int))
             );
+
+    connect(ui.imageView, SIGNAL(imageUpdated(const QImage &)),
+            this, SLOT(onImageViewUpdated(const QImage &))
+            );
 }
 
 VideoRecorder::~VideoRecorder() {
@@ -147,6 +151,10 @@ void VideoRecorder::onSocketReadyRead(QObject *obj) {
 void VideoRecorder::on_actionEstimateFPS_triggered() {
     QtConcurrent::run(&camera, &CameraDevice::estimateFPS);
     //camera.estimateFPS();
+}
+
+void VideoRecorder::onImageViewUpdated(const QImage &img) {
+
 }
 
 bool VideoRecorder::initRemoteServer() {

@@ -1,5 +1,6 @@
 #include "cameradevice.h"
 #include <QDebug>
+#include <QDir>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -39,7 +40,7 @@ void CameraDevice::setRecordFilePath(const QString &path) {
 int CameraDevice::listDevices(bool silent) {
 #ifdef _WIN32
     return listDevicesWin32(silent);
-#else
+#elif defined(__APPLE__)
     return listDevicesOSX(silent);
 #endif
 }
@@ -236,12 +237,18 @@ void CameraDevice::startRecording(const QString &dstPath) {
         auto frameWidth = capturer.get(::CV_CAP_PROP_FRAME_WIDTH);
         auto frameHeight = capturer.get(::CV_CAP_PROP_FRAME_HEIGHT);
         auto format =
-#ifdef WIN32
+#ifdef _WIN32
         CV_FOURCC('D', 'I', 'V', 'X');
-#else
+#elif defined(__APPLE__)
         CV_FOURCC('m', 'p', '4', 'v');
 #endif
         recordFilePath = dstPath;
+
+        QDir dir(recordFilePath);
+
+        if (!dir.exists()) {
+            dir.mkpath(dir.absolutePath());
+        }
 
         if (recorder.open(recordFilePath.toStdString(), format, fps, cv::Size(frameWidth, frameHeight))) {
             recorderTimeElapsedTimer.restart();
@@ -255,6 +262,7 @@ void CameraDevice::stopRecording() {
     recording = false;
 
     if (recorder.isOpened()) {
+
         while (recorderRemainFrameCount) {
             //Busy waiting.
         };

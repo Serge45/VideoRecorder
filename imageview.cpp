@@ -9,28 +9,39 @@ ImageView::ImageView(QWidget *parent)
     ui.setupUi(this);
     ui.controlPanel->show();
     installEventFilter(this);
+
+#ifdef _DEBUG
+    ui.settingButton->setVisible(true);
+#else
+    ui.settingButton->setVisible(false);
+#endif
 }
 
 ImageView::~ImageView() {
 
 }
 
-ControlPanel *ImageView::controlPanel() {
+ControlPanel *ImageView::controlPanel() const {
     return ui.controlPanel;
 }
 
-QComboBox *ImageView::deviceComboBox() {
+QComboBox *ImageView::deviceComboBox() const {
     return ui.deviceListComboBox;
 }
 
-HoverMenuButton *ImageView::settingButton() {
+HoverMenuButton *ImageView::settingButton() const {
     return ui.settingButton;
+}
+
+const QImage &ImageView::image() const {
+    return localImage;
 }
 
 void ImageView::updateImage(const cv::Mat *img) {
     if (img->data && img->size().area()) {
         localImage = QtOcv::mat2Image_shared(*img).rgbSwapped();
         update();
+        emit imageUpdated(localImage);
     }
 }
 

@@ -10,6 +10,11 @@
 #include <QPropertyAnimation>
 #include "ui_controlpanel.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#include <ShObjIdl.h>
+#endif
+
 class QShowEvent;
 class QHideEvent;
 class QPaintEvent;
@@ -47,6 +52,13 @@ protected:
     void paintEvent(QPaintEvent *event);
     void showEvent(QShowEvent *event);
     void enterEvent(QEvent *event);
+
+#ifdef _WIN32
+    bool winEvent(MSG *message, long *result);
+    void initTaskBar();
+    ITaskbarList3 *taskBar;
+    THUMBBUTTON taskButtons[3];
+#endif
 
 private slots:
     void on_recordButton_toggled(bool checked);

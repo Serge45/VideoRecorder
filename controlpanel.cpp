@@ -30,6 +30,7 @@ ControlPanel::ControlPanel(QWidget *parent)
             this, SLOT(onShowHideAnimationFinished())
             );
     ui.playButton->setEnabled(recordFilePathValid(ui.recordFilePathEdit->text()));
+
 }
 
 ControlPanel::~ControlPanel() {
@@ -90,6 +91,52 @@ void ControlPanel::showEvent(QShowEvent *event) {
 void ControlPanel::enterEvent(QEvent *event) {
     showWithAnimation();
 }
+
+#ifdef _WIN32
+bool ControlPanel::winEvent(MSG *message, long *result) {
+    static UINT taskBarCreated = WM_NULL;
+
+    if (taskBarCreated == WM_NULL) {
+        taskBarCreated = RegisterWindowMessageW(L"TaskbarButtonCreated");
+    }
+
+    if (message->message == taskBarCreated) {
+        initTaskBar();
+    }
+
+    return false;
+}
+
+void ControlPanel::initTaskBar() {
+    auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, ::CLSCTX_INPROC_SERVER, ::IID_ITaskbarList3,
+                               (void **)(&taskBar)
+                               );
+
+    if (hr == S_OK) {
+        hr = taskBar->HrInit();
+
+        if (hr != S_OK) {
+            taskBar->Release();
+            taskBar = NULL;
+            return;
+        }
+    }
+
+    QString taskButtonStrings[3] = {"Record", "Stop", "Play"};
+
+    UINT IDTB_FIRST = 3000;
+
+    for (int i = 0; i < 3; ++i) {
+        wcscpy(taskButtons[i].szTip, taskButtonStrings[i].toStdWString().c_str());
+
+        taskButtons[i].iId = IDTB_FIRST + i;
+        taskButtons[i].dwMask = (THUMBBUTTONMASK)(THB_BITMAP | THB_FLAGS | THB_TOOLTIP);
+        taskButtons[i].dwFlags = (THUMBBUTTONFLAGS)(THBF_ENABLED);
+    }
+
+    taskBar->ThumbBarAddButtons(winId(), 3, taskButtons);
+}
+#endif
 
 void ControlPanel::on_recordButton_toggled(bool checked) {
     ui.recordFilePathEdit->setDisabled(checked);
