@@ -48,6 +48,7 @@ private:
     bool initRemoteServer();
     bool processIPCCommand(const VideoRecorderIPCCommand &cmd);
     void updateIPCClientCountUI();
+    void makeConnections();
 
 private:
     Ui::VideoRecorderClass ui;

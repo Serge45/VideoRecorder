@@ -14,89 +14,13 @@ VideoRecorder::VideoRecorder(QWidget *parent, Qt::WindowFlags flags)
     if (!initRemoteServer()) {
         return;
     }
+
     ui.setupUi(this);
+    makeConnections();
     ui.imageView->deviceComboBox()->addItems(CameraDevice::getDeviceList());
     ui.imageView->settingButton()->addAction(ui.actionEstimateFPS);
     ui.imageView->settingButton()->addAction(ui.actionIPCClientCount);
 
-    connect(&socketSignalMapper, SIGNAL(mapped(QObject *)),
-            this, SLOT(onSocketReadyRead(QObject *))
-            );
-
-    connect(&camera, SIGNAL(imageUpdated(const cv::Mat *)),
-            ui.imageView, SLOT(updateImage(const cv::Mat *))
-            );
-
-    connect(ui.imageView->controlPanel(), SIGNAL(startRecording(const QString &)),
-            &camera, SLOT(startRecording(const QString &))
-            );
-
-    connect(ui.imageView->controlPanel(), SIGNAL(stopRecording()),
-            &camera, SLOT(stopRecording())
-            );
-
-    connect(&camera, SIGNAL(updateRecordingState(bool)),
-            ui.imageView->controlPanel()->recordButton(), 
-            SLOT(setChecked(bool))
-            );
-
-    connect(&camera, SIGNAL(updateRecordingState(bool)),
-            ui.imageView->deviceComboBox(), 
-            SLOT(setDisabled(bool))
-            );
-
-    connect(ui.imageView->controlPanel(), SIGNAL(startPlaying(const QString &)),
-            &camera, SLOT(startPlaying(const QString &))
-            );
-
-    connect(ui.imageView->controlPanel(), SIGNAL(pausePlaying(bool)),
-            &camera, SLOT(pausePlaying(bool))
-            );
-
-    connect(ui.imageView->controlPanel(), SIGNAL(stopPlaying()),
-            &camera, SLOT(stopPlaying())
-            );
-
-    connect(&camera, SIGNAL(recordingHasFinished()),
-            ui.imageView->controlPanel(), SLOT(onCameraRecordingHasFinished())
-            );
-
-    connect(&camera, SIGNAL(playElapsedTimeUpdated(double)),
-            ui.imageView->controlPanel(), SLOT(onPlayElapseTimeUpdated(double))
-            );
-
-    connect(&camera, SIGNAL(recordElapsedTimeUpdated(double)),
-            ui.imageView->controlPanel(), SLOT(onPlayElapseTimeUpdated(double))
-            );
-
-    connect(&camera, SIGNAL(playProgressUpdated(int)), 
-            ui.imageView->controlPanel()->playProgressBar(),
-            SLOT(setValue(int))
-            );
-
-    connect(&camera, SIGNAL(videoHasLoaded(int)), 
-            ui.imageView->controlPanel(),
-            SLOT(onCameraVideoHasLoaded(int))
-            );
-
-    connect(ui.imageView->controlPanel()->playProgressBar(),
-            SIGNAL(valueChanged(int)),
-            &camera,
-            SLOT(setCurrentPlayVideoFrame(int))
-            );
-        
-    connect(&camera, SIGNAL(videoTotalTimeHasGot(double)),
-            ui.imageView->controlPanel(),
-            SLOT(onCameraVideoTimeHasGot(double))
-            );
-
-    connect(ui.imageView->deviceComboBox(), SIGNAL(currentIndexChanged(int)),
-            &camera, SLOT(setCameraIdx(int))
-            );
-
-    connect(ui.imageView, SIGNAL(imageUpdated(const QImage &)),
-            this, SLOT(onImageViewUpdated(const QImage &))
-            );
 }
 
 VideoRecorder::~VideoRecorder() {
@@ -248,6 +172,92 @@ bool VideoRecorder::processIPCCommand(const VideoRecorderIPCCommand &cmd) {
 }
 
 void VideoRecorder::updateIPCClientCountUI() {
-    QString text = QString("IPC Client: %1").arg(connectedSocketCount);
+    QString text = QString("IPC Client: %1");
+#if (QT_VERSION >= 0x050000)
+    text.arg(connectedSocketCount.load());
+#else
+    text.arg(connectedSocketCount);
+#endif
     ui.actionIPCClientCount->setText(text);
+}
+
+void VideoRecorder::makeConnections() {
+    connect(&socketSignalMapper, SIGNAL(mapped(QObject *)),
+            this, SLOT(onSocketReadyRead(QObject *))
+            );
+
+    connect(&camera, SIGNAL(imageUpdated(const cv::Mat *)),
+            ui.imageView, SLOT(updateImage(const cv::Mat *))
+            );
+
+    connect(ui.imageView->controlPanel(), SIGNAL(startRecording(const QString &)),
+            &camera, SLOT(startRecording(const QString &))
+            );
+
+    connect(ui.imageView->controlPanel(), SIGNAL(stopRecording()),
+            &camera, SLOT(stopRecording())
+            );
+
+    connect(&camera, SIGNAL(updateRecordingState(bool)),
+            ui.imageView->controlPanel()->recordButton(), 
+            SLOT(setChecked(bool))
+            );
+
+    connect(&camera, SIGNAL(updateRecordingState(bool)),
+            ui.imageView->deviceComboBox(), 
+            SLOT(setDisabled(bool))
+            );
+
+    connect(ui.imageView->controlPanel(), SIGNAL(startPlaying(const QString &)),
+            &camera, SLOT(startPlaying(const QString &))
+            );
+
+    connect(ui.imageView->controlPanel(), SIGNAL(pausePlaying(bool)),
+            &camera, SLOT(pausePlaying(bool))
+            );
+
+    connect(ui.imageView->controlPanel(), SIGNAL(stopPlaying()),
+            &camera, SLOT(stopPlaying())
+            );
+
+    connect(&camera, SIGNAL(recordingHasFinished()),
+            ui.imageView->controlPanel(), SLOT(onCameraRecordingHasFinished())
+            );
+
+    connect(&camera, SIGNAL(playElapsedTimeUpdated(double)),
+            ui.imageView->controlPanel(), SLOT(onPlayElapseTimeUpdated(double))
+            );
+
+    connect(&camera, SIGNAL(recordElapsedTimeUpdated(double)),
+            ui.imageView->controlPanel(), SLOT(onPlayElapseTimeUpdated(double))
+            );
+
+    connect(&camera, SIGNAL(playProgressUpdated(int)), 
+            ui.imageView->controlPanel()->playProgressBar(),
+            SLOT(setValue(int))
+            );
+
+    connect(&camera, SIGNAL(videoHasLoaded(int)), 
+            ui.imageView->controlPanel(),
+            SLOT(onCameraVideoHasLoaded(int))
+            );
+
+    connect(ui.imageView->controlPanel()->playProgressBar(),
+            SIGNAL(valueChanged(int)),
+            &camera,
+            SLOT(setCurrentPlayVideoFrame(int))
+            );
+        
+    connect(&camera, SIGNAL(videoTotalTimeHasGot(double)),
+            ui.imageView->controlPanel(),
+            SLOT(onCameraVideoTimeHasGot(double))
+            );
+
+    connect(ui.imageView->deviceComboBox(), SIGNAL(currentIndexChanged(int)),
+            &camera, SLOT(setCameraIdx(int))
+            );
+
+    connect(ui.imageView, SIGNAL(imageUpdated(const QImage &)),
+            this, SLOT(onImageViewUpdated(const QImage &))
+            );
 }

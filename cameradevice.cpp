@@ -237,7 +237,7 @@ void CameraDevice::startRecording(const QString &dstPath) {
         auto frameWidth = capturer.get(::CV_CAP_PROP_FRAME_WIDTH);
         auto frameHeight = capturer.get(::CV_CAP_PROP_FRAME_HEIGHT);
         auto format =
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
         CV_FOURCC('D', 'I', 'V', 'X');
 #elif defined(__APPLE__)
         CV_FOURCC('m', 'p', '4', 'v');
@@ -263,9 +263,15 @@ void CameraDevice::stopRecording() {
 
     if (recorder.isOpened()) {
 
+#if QT_VERSION >= 0x050000
+        while (recorderRemainFrameCount.load()) {
+            //Busy waiting.
+        };
+#else
         while (recorderRemainFrameCount) {
             //Busy waiting.
         };
+#endif
         recorder.release();
         emit updateRecordingState(recording);
         emit recordingHasFinished();
@@ -320,6 +326,8 @@ void CameraDevice::setCameraIdx(int idx) {
 
     if (!playing && !recording) {
         stopCapturing();
+        capturer.release();
+        capturer.open(deviceIdx);
         startCapturing();
     }
 }
