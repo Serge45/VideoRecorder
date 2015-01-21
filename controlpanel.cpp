@@ -3,6 +3,10 @@
 #include <QPainter>
 #include <QFileInfo>
 
+#if defined(_WIN32)
+#pragma comment(lib, "ole32")
+#endif
+
 QString msToStandardTimeString(double t) {
     double sec = t / 1000.;
     double secFrac = 0.;
@@ -134,7 +138,7 @@ void ControlPanel::initTaskBar() {
         taskButtons[i].dwFlags = (THUMBBUTTONFLAGS)(THBF_ENABLED);
     }
 
-    taskBar->ThumbBarAddButtons(winId(), 3, taskButtons);
+    //taskBar->ThumbBarAddButtons(winId(), 3, taskButtons);
 }
 #endif
 

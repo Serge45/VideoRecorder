@@ -76,6 +76,7 @@ void GeometryEngine::initCubeGeometry()
     // duplicate vertex for each face because texture coordinate
     // is different.
     VertexData vertices[] = {
+        /*
         // Vertex data for face 0
         {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)},  // v0
         {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.33f, 0.0f)}, // v1
@@ -111,6 +112,42 @@ void GeometryEngine::initCubeGeometry()
         {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.66f, 0.5f)}, // v21
         {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.33f, 1.0f)}, // v22
         {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.66f, 1.0f)}  // v23
+        */
+        // Vertex data for face 0
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(1.0f, 0.0f)},  // v0
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)}, // v1
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(1.0f, 1.0f)},  // v2
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.0f, 1.0f)}, // v3
+
+        // Vertex data for face 1
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(1.0f, 0.0f)}, // v4
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v5
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(1.0f, 1.0f)}, // v6
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v7
+
+        // Vertex data for face 2
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(1.0f, 0.0f)}, // v8
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v9
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(1.0f, 1.0f)}, // v10
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v11
+
+        // Vertex data for face 3
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(1.0f, 0.0f)}, // v12
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)}, // v13
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(1.0f, 1.0f)}, // v14
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(0.0f, 1.0f)}, // v15
+
+        // Vertex data for face 4
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(1.0f, 0.0f)}, // v16
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v17
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(1.0f, 1.0f)}, // v18
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.0f, 1.0f)}, // v19
+
+        // Vertex data for face 5
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(1.0f, 0.0f)}, // v20
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.0f, 0.0f)}, // v21
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(1.0f, 1.0f)}, // v22
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v23
     };
 
     // Indices for drawing cube faces using triangle strips.
@@ -166,4 +203,5 @@ void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program)
     // Draw cube geometry using indices from VBO 1
     glDrawElements(GL_TRIANGLE_STRIP, 34, GL_UNSIGNED_SHORT, 0);
 }
+
 //! [2]

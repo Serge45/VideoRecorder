@@ -25,6 +25,7 @@
 #endif
 
 class QLocalSocket;
+class GLImageView;
 
 class VideoRecorder : public QMainWindow
 {
@@ -57,6 +58,7 @@ private:
     bool remoteWorkable;
     QAtomicInt connectedSocketCount;
     QSignalMapper socketSignalMapper;
+    GLImageView *glImageView;
 };
 
 #endif // VIDEORECORDER_H

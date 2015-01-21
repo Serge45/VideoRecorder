@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <dshow.h>
 #pragma comment(lib, "strmiids")
+#pragma comment(lib, "oleaut32")
 #endif
 
 qint64 fpsToTimeMs(int fps) {

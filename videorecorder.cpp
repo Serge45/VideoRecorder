@@ -6,6 +6,7 @@
 #include "cameradevice.h"
 #include "hovermenubutton.h"
 #include "VideoRecorderGlobalDef.h"
+#include "glimageview.h"
 
 VideoRecorder::VideoRecorder(QWidget *parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags), camera(this, 0), remoteServer(this),
@@ -21,12 +22,18 @@ VideoRecorder::VideoRecorder(QWidget *parent, Qt::WindowFlags flags)
     ui.imageView->settingButton()->addAction(ui.actionEstimateFPS);
     ui.imageView->settingButton()->addAction(ui.actionIPCClientCount);
 
+    glImageView = new GLImageView(nullptr);
+    connect(ui.imageView, SIGNAL(imageUpdated(QImage)),
+            glImageView, SLOT(updateTexture(QImage))
+            );
+    glImageView->show();
 }
 
 VideoRecorder::~VideoRecorder() {
     if (remoteServer.isListening()) {
         remoteServer.close();
     }
+    glImageView->deleteLater();
 }
 
 bool VideoRecorder::isRemoteWorkable() const {
