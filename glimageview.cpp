@@ -1,6 +1,7 @@
 #include "glimageview.h"
 #include <QMouseEvent>
 #include <QOpenGLTexture>
+#include <QOpenGLFramebufferObject>
 #include <QMutex>
 #include "geometryengine.h"
 
@@ -9,8 +10,11 @@ GLImageView::GLImageView(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(nullptr),
     texture(nullptr),
-    angularSpeed(0.)
+    frameBuffer(nullptr),
+    angularSpeed(0.),
+    zTranslate(-5.0)
 {
+
 }
 
 GLImageView::~GLImageView()
@@ -23,24 +27,31 @@ GLImageView::~GLImageView()
 
 void GLImageView::updateTexture(const QImage &img)
 {
-    //Fucking slow...
     localBuffer = img;
 
-    if (texture) {
-        delete texture;
+    if (!frameBuffer) {
+        frameBuffer = new QOpenGLFramebufferObject(localBuffer.size());
     }
 
-    texture = new QOpenGLTexture(localBuffer.mirrored(true, true));
-
-    // Set nearest filtering mode for texture minification
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
-
-    // Set bilinear filtering mode for texture magnification
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
-
-    // Wrap texture coordinates by repeating
-    // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-    texture->setWrapMode(QOpenGLTexture::Repeat);
+    //Start drawing on framebuffer.
+    frameBuffer->bind();
+    //Save current viewport setting.
+    glPushAttrib(GL_VIEWPORT_BIT);
+    //Set viewport
+    glViewport(0, 0, localBuffer.width(), localBuffer.height());
+    //Use texure of bound framebuffer.
+    glBindTexture(GL_TEXTURE_2D, frameBuffer->texture());
+    //Upload image to framebuffer(its texture buffer).
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 localBuffer.width(), localBuffer.height(),
+                 0, GL_RGB, GL_UNSIGNED_BYTE, localBuffer.bits()
+                 );
+    //Unbind texture.
+    glBindTexture(GL_TEXTURE_2D, 0);
+    //Unbind framebuffer.
+    frameBuffer->release();
+    //Load saved viewport setting.
+    glPopAttrib();
 }
 
 void GLImageView::mousePressEvent(QMouseEvent *e)
@@ -51,6 +62,7 @@ void GLImageView::mousePressEvent(QMouseEvent *e)
     } else if (e->button() == Qt::RightButton) {
         angularSpeed = 0;
         rotation = QQuaternion();
+        zTranslate = -5.0;
     }
 }
 
@@ -65,8 +77,7 @@ void GLImageView::mouseReleaseEvent(QMouseEvent *e)
         QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
 
         // Accelerate angular speed relative to the length of the mouse sweep
-        qreal acc = diff.length() / 100.0;
-
+        qreal acc = diff.length() / static_cast<qreal>(width() + height());
         // Calculate new rotation axis as weighted sum
         rotationAxis = (rotationAxis * angularSpeed + n * acc).normalized();
 
@@ -76,7 +87,7 @@ void GLImageView::mouseReleaseEvent(QMouseEvent *e)
     }
 }
 
-void GLImageView::timerEvent(QTimerEvent *e)
+void GLImageView::timerEvent(QTimerEvent * /*e*/)
 {
     if (mousePressed) {
         update();
@@ -96,6 +107,22 @@ void GLImageView::timerEvent(QTimerEvent *e)
     update();
 }
 
+void GLImageView::wheelEvent(QWheelEvent *event)
+{
+    if (zTranslate >= -3.0) {
+        return event->ignore();
+    }
+    QPoint numPixels = event->pixelDelta();
+    QPoint numDegrees = event->angleDelta() / 8;
+
+    if (!numPixels.isNull()) {
+        zTranslate += numPixels.y();
+    } else {
+        zTranslate += numDegrees.y() / 150.;
+    }
+    event->accept();
+}
+
 void GLImageView::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -105,13 +132,11 @@ void GLImageView::initializeGL()
     initShaders();
     initTextures();
 
-//! [2]
     // Enable depth buffer
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
     glEnable(GL_CULL_FACE);
-//! [2]
     glEnable(GL_BLEND);
 
     geometries = new GeometryEngine;
@@ -127,7 +152,7 @@ void GLImageView::resizeGL(int w, int h)
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
     // Set near plane to 3.0, far plane to 7.0, field of view 45 degrees
-    const qreal zNear = 3.0, zFar = 7.0, fov = 45.0;
+    const qreal zNear = 1.0, zFar = 7.0, fov = 45.0;
 
     // Reset projection
     projection.setToIdentity();
@@ -142,18 +167,16 @@ void GLImageView::paintGL()
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (texture) {
-        texture->bind();
+    if (frameBuffer) {
+        glBindTexture(GL_TEXTURE_2D, frameBuffer->texture());
     }
-//! [6]
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    matrix.translate(0.0, 0.0, -5.0);
+    matrix.translate(0.0, 0.0, zTranslate);
     matrix.rotate(rotation);
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
-//! [6]
 
     // Use texture unit 0 which contains cube.png
     //program.setUniformValue("texture", 0);

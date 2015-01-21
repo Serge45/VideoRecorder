@@ -9,15 +9,13 @@ uniform sampler2D texture;
 varying vec2 v_texcoord;
 varying float z_coord;
 
-//! [0]
 void main()
 {
     // Set fragment color from texture
     float alpha = 2.f - abs(-1 - z_coord);
     alpha /= 2.f;
     vec4 fragment = texture2D(texture, v_texcoord);
-    fragment *= alpha;
+    //fragment *= alpha;
     gl_FragColor = fragment;
 }
-//! [0]
 

@@ -8,6 +8,7 @@
 
 class GeometryEngine;
 class QOpenGLTexture;
+class QOpenGLFramebufferObject;
 
 class GLImageView : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -22,7 +23,8 @@ public slots:
 protected:
     void mousePressEvent(QMouseEvent *e) Q_DECL_OVERRIDE;
     void mouseReleaseEvent(QMouseEvent *e) Q_DECL_OVERRIDE;
-    void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
+    void timerEvent(QTimerEvent *) Q_DECL_OVERRIDE;
+    void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
 
     void initializeGL() Q_DECL_OVERRIDE;
     void resizeGL(int w, int h) Q_DECL_OVERRIDE;
@@ -35,17 +37,16 @@ private:
     QBasicTimer timer;
     QOpenGLShaderProgram program;
     GeometryEngine *geometries;
-
     QOpenGLTexture *texture;
-
+    QOpenGLFramebufferObject *frameBuffer;
     QMatrix4x4 projection;
-
     QVector2D mousePressPosition;
     QVector3D rotationAxis;
     qreal angularSpeed;
     QQuaternion rotation;
     bool mousePressed;
     QImage localBuffer;
+    qreal zTranslate;
 };
 
 #endif // GLIMAGEVIEW_H

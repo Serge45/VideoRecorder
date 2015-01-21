@@ -2,6 +2,5 @@
     <qresource prefix="/">
         <file>Resources/fshader.glsl</file>
         <file>Resources/vshader.glsl</file>
-        <file>Resources/cube.png</file>
     </qresource>
 </RCC>
