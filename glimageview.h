@@ -25,6 +25,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *e) Q_DECL_OVERRIDE;
     void timerEvent(QTimerEvent *) Q_DECL_OVERRIDE;
     void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
+    void mouseMoveEvent(QMouseEvent *e);
 
     void initializeGL() Q_DECL_OVERRIDE;
     void resizeGL(int w, int h) Q_DECL_OVERRIDE;
@@ -47,6 +48,9 @@ private:
     bool mousePressed;
     QImage localBuffer;
     qreal zTranslate;
+    qreal imgWHRatio;
+    int textureOffsetX;
+    int textureOffsetY;
 };
 
 #endif // GLIMAGEVIEW_H

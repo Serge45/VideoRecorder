@@ -1,11 +1,14 @@
 #include "videorecorder.h"
 
 #include <QtGlobal>
+#include <QDebug>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#else
 #include <QLocalSocket>
 #include <QDataStream>
 #endif
+
 #if (QT_VERSION >= 0x050000)
 #include <QtGui/qguiapplication.h>
 #else

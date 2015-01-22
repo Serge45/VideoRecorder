@@ -12,7 +12,9 @@ GLImageView::GLImageView(QWidget *parent) :
     texture(nullptr),
     frameBuffer(nullptr),
     angularSpeed(0.),
-    zTranslate(-5.0)
+    zTranslate(-5.0),
+    textureOffsetX(0),
+    textureOffsetY(0)
 {
 
 }
@@ -30,7 +32,12 @@ void GLImageView::updateTexture(const QImage &img)
     localBuffer = img;
 
     if (!frameBuffer) {
-        frameBuffer = new QOpenGLFramebufferObject(localBuffer.size());
+        auto imgSize = localBuffer.size();
+        imgWHRatio = static_cast<qreal>(imgSize.width()) / imgSize.height();
+        int longSide = std::max<int>(imgSize.width(), imgSize.height());
+        frameBuffer = new QOpenGLFramebufferObject(QSize(longSide, longSide));
+        textureOffsetX = (longSide - localBuffer.width()) / 2;
+        textureOffsetY = (longSide - localBuffer.height()) / 2;
     }
 
     //Start drawing on framebuffer.
@@ -38,14 +45,14 @@ void GLImageView::updateTexture(const QImage &img)
     //Save current viewport setting.
     glPushAttrib(GL_VIEWPORT_BIT);
     //Set viewport
-    glViewport(0, 0, localBuffer.width(), localBuffer.height());
+    glViewport(0, 0, frameBuffer->width(), frameBuffer->height());
     //Use texure of bound framebuffer.
     glBindTexture(GL_TEXTURE_2D, frameBuffer->texture());
     //Upload image to framebuffer(its texture buffer).
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                 localBuffer.width(), localBuffer.height(),
-                 0, GL_RGB, GL_UNSIGNED_BYTE, localBuffer.bits()
-                 );
+    glTexSubImage2D(GL_TEXTURE_2D, 0, textureOffsetX, textureOffsetY,
+                    localBuffer.width(), localBuffer.height(),
+                    GL_RGB, GL_UNSIGNED_BYTE, localBuffer.bits()
+                    );
     //Unbind texture.
     glBindTexture(GL_TEXTURE_2D, 0);
     //Unbind framebuffer.
@@ -62,7 +69,6 @@ void GLImageView::mousePressEvent(QMouseEvent *e)
     } else if (e->button() == Qt::RightButton) {
         angularSpeed = 0;
         rotation = QQuaternion();
-        zTranslate = -5.0;
     }
 }
 
@@ -77,7 +83,7 @@ void GLImageView::mouseReleaseEvent(QMouseEvent *e)
         QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
 
         // Accelerate angular speed relative to the length of the mouse sweep
-        qreal acc = diff.length() / static_cast<qreal>(width() + height());
+        qreal acc = diff.length() /100.;
         // Calculate new rotation axis as weighted sum
         rotationAxis = (rotationAxis * angularSpeed + n * acc).normalized();
 
@@ -89,19 +95,22 @@ void GLImageView::mouseReleaseEvent(QMouseEvent *e)
 
 void GLImageView::timerEvent(QTimerEvent * /*e*/)
 {
-    if (mousePressed) {
-        update();
-        return;
-    }
     // Decrease angular speed (friction)
-    angularSpeed *= 0.99;
+    if (!mousePressed) {
+        angularSpeed *= 0.99;
+    }
 
     // Stop rotation when speed goes below threshold
     if (angularSpeed < 0.01) {
         angularSpeed = 0.0;
     } else {
         // Update rotation
-        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
+
+        if (!mousePressed) {
+            rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
+        } else {
+            rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed);
+        }
     }
 
     update();
@@ -109,18 +118,50 @@ void GLImageView::timerEvent(QTimerEvent * /*e*/)
 
 void GLImageView::wheelEvent(QWheelEvent *event)
 {
-    if (zTranslate >= -3.0) {
-        return event->ignore();
-    }
     QPoint numPixels = event->pixelDelta();
     QPoint numDegrees = event->angleDelta() / 8;
+    qreal shift = 0;
 
     if (!numPixels.isNull()) {
-        zTranslate += numPixels.y();
+        shift = numPixels.y();
     } else {
-        zTranslate += numDegrees.y() / 150.;
+        shift = numDegrees.y() / 150.;
+    }
+
+    zTranslate += shift;
+
+    if (zTranslate < -5) {
+        zTranslate = -5;
+    }
+
+    if (zTranslate > -2) {
+        zTranslate = -2;
     }
     event->accept();
+}
+
+void GLImageView::mouseMoveEvent(QMouseEvent *e)
+{
+    if (e->button() | Qt::LeftButton) {
+        // Mouse release position - mouse press position
+        QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
+
+        if (diff.length() < 2.f) {
+            return;
+        }
+
+        // Rotation axis is perpendicular to the mouse position difference
+        // vector
+        QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
+
+        // Accelerate angular speed relative to the length of the mouse sweep
+        qreal acc = diff.length() /100.;
+        // Calculate new rotation axis as weighted sum
+        rotationAxis = (rotationAxis + n * acc).normalized();
+
+        // Increase angular speed
+        angularSpeed = (diff.length());
+    }
 }
 
 void GLImageView::initializeGL()
@@ -208,18 +249,4 @@ void GLImageView::initShaders()
 
 void GLImageView::initTextures()
 {
-    /*
-    // Load cube.png image
-    texture = new QOpenGLTexture(QImage(":/Resources/cube.png").mirrored());
-
-    // Set nearest filtering mode for texture minification
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
-
-    // Set bilinear filtering mode for texture magnification
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
-
-    // Wrap texture coordinates by repeating
-    // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-    texture->setWrapMode(QOpenGLTexture::Repeat);
-    */
 }

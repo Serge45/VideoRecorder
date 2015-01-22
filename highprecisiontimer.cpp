@@ -38,7 +38,6 @@ void HighPrecisionTimer::stop() {
 
 void HighPrecisionTimer::timerLoop() {
     timer.restart();
-    auto isValid = timer.isValid();
     referenceTime = timer.elapsed();
     qint64 leftOver = 0;
 
